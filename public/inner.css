@@ -1,0 +1,105 @@
+
+.app-card {
+  margin-top: 25px;
+  display: flex;
+  flex-direction: column;
+  width: 80px;
+  height: 70px;
+  font-size: 16px;
+  background-color: rgba(230, 226, 226, 0.112);
+  border-radius: 14px;
+  border: 1px solid var(--theme-bg-color);
+  padding: 20px;
+  cursor: pointer;
+  transition: 0.01s ease;
+  margin: 0.4em;
+  justify-content: center;
+  align-items: center;
+  font-weight: bolder;
+}
+
+.app-card:hover {
+  transform: scale(1.02);
+  background-color: rgba(230, 226, 226, 0.756);
+  border: 3px solid rgba(255, 255, 255, 0.24);
+}
+
+.app-card.clicked {
+  background-color: rgba(230, 226, 226, 0.756);
+  border: 3px solid rgba(255, 255, 255, 0.24);
+}
+
+.cards{
+  margin-top: 25px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: center;
+}
+
+
+.main-header-heading{
+  color: white;
+  font-size: large;
+  padding-left: 25px;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  color: var(--theme-color);
+  padding: 20px 40px;
+  height: 100%;
+  overflow: auto;
+  background-color: var(--theme-bg-color);
+}
+@media screen and (max-width: 510px) {
+  .content-wrapper {
+    padding: 20px;
+  }
+}
+
+.ques-content {
+  margin-top: 30px;
+  margin-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.options {
+  color: var(--content-title-color);
+  margin-bottom: 30px;
+}
+
+.option{
+  margin-top: 25px;
+  width: calc(33.3% - 20px);
+  background-color: var(--content-bg);
+  border-radius: 14px;
+  border: 3px solid var(--theme-bg-color);
+  padding: 20px;
+  cursor: pointer;
+  transition: 0.01s ease;
+  color: white;
+}
+
+.option:hover{
+  transform: scale(1.02);
+  background-color: var(--theme-bg-color);
+  border: 3px solid rgb(208 210 222 / 24%);
+}
+
+.option.clicked{
+  background-color: var(--theme-bg-color);
+  border: 3px solid rgb(208 210 222 / 24%);
+}
+
+.submit .button{
+  margin-right: 40px;
+  width: 110px;
+}
+
+.selected{
+  background-color: #a5dc86;
+}

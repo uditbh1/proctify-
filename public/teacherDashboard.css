@@ -1,0 +1,63 @@
+.heading {
+  color: var(--inactive-color);
+  font-size: larger;
+  margin-top: 20px;
+}
+.tests{
+  color: white;
+  margin: 10px;
+}
+.tests:hover, tbody tr:hover{
+  background-color: rgb(16 18 27 / 33%);
+  cursor: pointer;
+  border-radius: 40px;
+  transform: scale(1.01);
+}
+
+.test-selected{
+  background-color: rgb(16 18 27 / 33%);
+}
+
+.create .button {
+  margin-right: 40px;
+  width: 110px;
+  margin-top: 20px;
+  margin-bottom: 40px;
+}
+
+.logout .button {
+  margin-right: 40px;
+  width: 110px;
+}
+
+.table-heading {
+  color: var(--inactive-color);
+  font-size: larger;
+  margin-top: 20px;
+  margin-left: 55px;
+}
+
+table{
+  margin-top: 20px;
+  margin-left: 40px;
+}
+
+td, th{
+  color: #f6f6f6;
+  padding: 16px;
+  text-align: center;
+}
+
+.side-menu {
+  display: none;
+}
+
+@media screen and (max-width: 1331px) {
+  .side-menu {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px;
+  }
+}

@@ -1,0 +1,143 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+* {
+  outline: none;
+  box-sizing: border-box;
+}
+
+:root {
+  --theme-bg-color: rgba(16 18 27 / 40%);
+  --border-color: rgba(113 119 144 / 25%);
+  --theme-color: #f9fafb;
+  --inactive-color: rgb(113 119 144 / 78%);
+  --body-font: "Poppins", sans-serif;
+  --hover-menu-bg: rgba(12 15 25 / 30%);
+  --content-title-color: #999ba5;
+  --content-bg: rgb(146 151 179 / 13%);
+  --button-inactive: rgb(249 250 251 / 55%);
+  --dropdown-bg: #21242d;
+  --dropdown-hover: rgb(42 46 60);
+  --popup-bg: rgb(22 25 37);
+  --search-bg: #14162b;
+  --overlay-bg: rgba(36, 39, 59, 0.3);
+  --scrollbar-bg: rgb(1 2 3 / 40%);
+}
+
+html {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0px;
+  max-width: 100%;
+  overflow-x: hidden;
+  font-family: var(--body-font);
+  background-image: url("bg.jpg");
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh !important;
+}
+@media screen and (max-width: 480px) {
+  body {
+    padding: 0.8em;
+  }
+}
+.app {
+  background-color: var(--theme-bg-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  -moz-backdrop-filter: blur(20px);
+  font-size: 15px;
+  font-weight: 500;
+  height: 100%;
+}
+.wrapper {
+  display: flex;
+  flex-grow: 1;
+  overflow: scroll;
+}
+
+.main-header-heading{
+  color: white;
+  font-size: large;
+  padding-left: 25px;
+}
+
+.left-side {
+  flex-basis: 350px;
+  border-right: 1px solid var(--border-color);
+  padding: 26px;
+  overflow: auto;
+  flex-shrink: 0;
+}
+
+.main-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.main-header{
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  height: 58px;
+  flex-shrink: 0;
+  justify-content: space-between;
+}
+
+.button{
+  height: 43px;
+  width: 80px;
+  background-color: #f6f6f6;
+  border-radius: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.button:hover{
+  transform: scale(1.02);
+  background-color: rgb(243 243 243 / 58%);
+  color: white;
+}
+
+.camera video, canvas{
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
+.logoutBtn {
+  display: none;
+}
+
+.fa {
+  color: whitesmoke;
+  font-size: 2rem;
+}
+
+@media screen and (max-width: 1331px) {
+  .main-container {
+    display: none;
+  }
+  .logoutBtn {
+    display: block;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+  }
+  .wrapper {
+    display: block;
+  }
+}

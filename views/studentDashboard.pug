@@ -1,0 +1,51 @@
+doctype html
+head
+  meta(http-equiv='Content-Type' content='text/html; charset=UTF-8')
+  meta(http-equiv='X-UA-Compatible' content='IE=edge')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title Student DashBoard
+  link(rel='shortcut icon' href='TESTIFY.png')
+
+  link(rel='stylesheet' href='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css')
+  script(src='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js')
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js')
+
+  link(rel='stylesheet' type='text/css' href='/combined.css')
+  link(rel='stylesheet' type='text/css' href='/studentDashboard.css')
+  script(type='text/javascript' defer src='/student.js')
+.app
+  .wrapper
+    // Left side Wrapper
+    .left-side
+      .side-wrapper
+        .side-menu
+          a(href="/")
+            img(src='/TESTIFY.png' alt='Logo' style='height:50px;display: block; margin-left: auto; margin-right: auto')
+          button.button.logout Log Out
+        .side-title User Details
+        .side-menu
+          a#username #{userDetails.name}
+          a#useremail #{userDetails.email}
+        .container
+          .join
+            button.button.joinBtn Join Exam
+      .side-wrapper
+        #user-rooms.side-menu
+    .main-container
+      .main-header
+        a.menu-link-main(href='/dashboard') Your Dashboard
+        button.button.logout Log Out
+      .content-wrapper
+        .content-section
+          .content-section-title Previous Exams
+          .apps-card
+            each data,idx in examDetails
+              .app-card
+                div
+                  img#app-card-img-1
+                  .sub_name #{data.exam.examCode}
+                  .date Date -&gt; #{new Date(data.exam.startTime).toDateString().toLocaleString('en-US', {timeZone: 'IST'})}
+                  .date Time -&gt; #{`${new Date(data.exam.startTime).toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, timeZone: 'IST' })} - ${new Date(data.exam.endTime).toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true, timeZone: 'IST'})} `}
+                .app-card-buttons
+                  button.content-button.result-button(data-examCode= data.exam.examCode)
+                    | View Result

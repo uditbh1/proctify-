@@ -1,0 +1,76 @@
+doctype html
+head
+  meta(charset='UTF-8')
+  meta(http-equiv='X-UA-Compatible' content='IE=edge')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title Proctify - Proctoring System
+  link(rel='shortcut icon' href='TESTIFY.png')
+
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js')
+  link(rel='stylesheet' href='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css')
+  script(src='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js')
+
+  link(rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css')
+  link(rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css')
+
+  link(rel='stylesheet' href='/landing.css')
+  script(src='script.js' defer)
+
+header.header
+  a.logo(data-aos='zoom-in-left' data-aos-delay='50' href='#')
+    i.fas.fa-paper-plane
+    | Proctify 
+  a.btn(data-aos='zoom-in-left' data-aos-delay='200' href= loggedIn ? '/dashboard' : '/login')
+    if loggedIn 
+        i.fas.fa-user
+    else 
+        p Login / Signup
+
+section#home.home
+  .home-content
+    .content-area
+      .main-content
+        .main-container
+          .main-title Proctify
+          .home-title  Online Exam Proctoring Platform
+          .main-about
+            | Flexible and secure online proctoring for you and your test-takers. It is a browser solution for online monitoring, and evaluating user behaviour throughout online assessments.
+          a.btn(data-aos='zoom-in-left' data-aos-delay='200' href='/login') Get Started
+    .image-area
+      img(src='/image-home.png' alt='')
+// home section ends
+section#about.about
+  .content(data-aos='fade-left' data-aos-delay='600')
+    span why choose us?
+    h3 Online Proctoring Platform
+    p
+      | It is a full-featured solution for online examination &ndash; entrance test, recruitment examination, skill assessment etc.
+  .img-container(data-aos='fade-right' data-aos-delay='300')
+    img(src='imga.png')
+// services section starts
+section#services.services
+  .heading
+    h1 Our services
+  .box-container
+    .box(data-aos='zoom-in-up' data-aos-delay='150')
+      i.fas.fa-globe
+      h3 Remote Proctoring
+      p
+        | testing overseen by an authorized, neutral, proctor, who ensures the identity of the test taker and the integrity of the test taking environment.
+    .box(data-aos='zoom-in-up' data-aos-delay='300')
+      i.fas.fa-hotel
+      h3 University Semester
+      p
+        | Many institutes and universities are shifting to the online assessment process from the traditional pen &amp; paper examinations, thus, helping them design the online semester examination patterns.
+    .box(data-aos='zoom-in-up' data-aos-delay='750')
+      i.fas.fa-wallet
+      h3 Data Security And Storage Of Records
+      p
+        | It offer end-to-end encrypted data security, which includes images, question banks, results, and logs that are created during assessments..
+// footer section ends
+script(src='https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js')
+script.
+    AOS.init({
+      duration: 800,
+      offset:150,
+    });

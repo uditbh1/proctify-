@@ -1,0 +1,58 @@
+doctype html
+head
+  meta(http-equiv='Content-Type' content='text/html; charset=UTF-8')
+  meta(http-equiv='X-UA-Compatible' content='IE=edge')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title Teacher DashBoard
+  link(rel='shortcut icon' href='TESTIFY.png')
+
+  link(rel='stylesheet' href='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css')
+  script(src='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js')
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js')
+  script(src="https://cdn.rawgit.com/Keyang/node-csvtojson/d41f44aa/browser/csvtojson.min.js")
+
+  link(rel='stylesheet' type='text/css' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css')
+  link(rel='stylesheet' type='text/css' href='/combined.css')
+  link(rel='stylesheet' type='text/css' href='/teacherDashboard.css')
+.app
+  .side-menu
+    a(href="/")
+      img(src='/TESTIFY.png' alt='Logo' style='height:50px;display: block; margin-left: auto; margin-right: auto')
+    button.button.logout Log Out
+  .wrapper
+    .left-side
+      .container
+        .heading Create New Tests
+        .create
+          button.button.createBtn Create
+      .container
+        .heading Check Result And Activity Logs
+      .container.ongoingTest
+        .heading Ongoing Tests
+      .container.pastTest
+        .heading Past Tests
+      .container.futureTest
+        .heading Future Tests
+    .main-container
+      .main-header
+        .main-header-heading  Result 
+        .logout
+          button.button Log Out
+      .content-wrapper
+        .table-heading Exam Logs
+        .table
+          table
+            thead
+              tr
+                th S.No.
+                th Name
+                th Email
+                th Tab Changes
+                th Face Not Visible
+                th Multiple Faces Detected
+                th Mobile Found
+                th Prohibited Object Found
+            tbody
+              tr
+                
+script(type='text/javascript' src='/teacher.js')

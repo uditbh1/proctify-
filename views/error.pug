@@ -1,0 +1,27 @@
+doctype html
+head
+  meta(charset='UTF-8')
+  meta(http-equiv='X-UA-Compatible' content='IE=edge')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title Proctify
+  link(rel='shortcut icon' href='TESTIFY.png')
+  link(rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css')
+  link(rel='stylesheet' href='/error.css')
+
+header.header
+  a.logo(data-aos='zoom-in-left' data-aos-delay='150' href='/')
+    i.fas.fa-paper-plane
+    | Proctify
+  a.btn(data-aos='zoom-in-left' data-aos-delay='200' href= loggedIn ? '/dashboard' : '/login')
+    if loggedIn 
+        i.fas.fa-user
+    else 
+        p Login / Signup
+
+section#home.home
+  .home-content
+    .content-area
+      .error-photo
+        img(src=`/error_${errorCode}.png` alt='' height='400px')
+      .text-area
+        .text #{errorString}

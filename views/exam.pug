@@ -1,0 +1,43 @@
+doctype html
+head
+  meta(http-equiv='Content-Type' content='text/html; charset=UTF-8')
+  meta(http-equiv='X-UA-Compatible' content='IE=edge')
+  meta(name='viewport' content='width=device-width, initial-scale=1.0')
+  title Exam Page
+  link(rel='shortcut icon' href='TESTIFY.png')
+  link(rel='stylesheet' href='/inner.css')
+  link(rel='stylesheet' href='/combined.css')
+
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.27.2/axios.min.js')
+  link(rel='stylesheet' href='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css')
+  script(src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs')
+  script(src='https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd')
+  script(src='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js')
+.app
+  .camera
+    video(src='/bg.jpg' width='300' height='250' autoplay='')
+  canvas(width='300' height='250' style='border:1px solid #d3d3d3;')
+  .wrapper
+    .left-side
+      .main-header-heading
+        | Question Panel
+      .cards
+        each ques,idx in examDetails.questions
+          div.app-card(data-ques=idx+1)= idx+1 
+    .main-container
+      .main-header
+        #increment.main-header-heading(data-ques='1')  
+        .main-header-heading Remaining Time : 
+          span.timer #{new Date(examDetails.endTime).getTime() - Date.now() - 3000}
+        .submit
+          button.button.submitBtn
+            | Submit Test
+      .content-wrapper
+        .ques-content
+          | Lorem Lorem ipsum dolor sit amet consectetur adipisicing elit. Rerum soluta obcaecati est. Sunt tempora numquam dolorem inventore eos dignissimos mollitia, excepturi esse corrupti. ipsum dolor sit amet consectetur adipisicing elit. Sunt, quae? Quod dolor consequuntur culpa, minima repudiandae quisquam amet neque. Temporibus molestiae ea unde ad veritatis.
+        .options
+        .next
+          button.button Next
+      p.ques(style="display: none;") #{JSON.stringify(examDetails.questions)}
+      p.examCode(style="display: none;") #{examDetails.examCode}
+script(src='/inner.js')
