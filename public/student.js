@@ -26,35 +26,63 @@ joinBtn.addEventListener('click', async () => {
       }
     }
   });
-  
+
   if (examCode) {
-    try{
-      const res = await axios.post(`/api/v1/status`, {examCode});
-      if(res.status === 200) window.location.href = '/exam/'+examCode;
-    }
-    catch(err){
-      if(err.response.status === 409) window.location.href = '/exam/'+examCode;
-      else if(err.response.status === 404) popupMsg(err.response.data.message, 'error');
+    try {
+      const res = await axios.post(`/api/v1/status`, { examCode });
+      if (res.status === 200) {
+        const qrCodeData = window.location.href + '/mobilecam/exam/' + examCode;
+
+        Swal.fire({
+          title: 'Scan the QR Code',
+          html: `<div id="qrCode" style="display: flex; justify-content: center; margin-top: 20px;"></div>`,
+          heightAuto: false,
+          showCancelButton: true,
+          showConfirmButton: true,
+          confirmButtonText: 'OK',
+          didRender: () => {
+            new QRCode(document.getElementById("qrCode"), {
+              text: qrCodeData,
+              width: 128,
+              height: 128,
+            });
+          }
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = '/exam/' + examCode;
+          }
+        });
+      }
+    } catch (err) {
+      if (err.response) {
+        if (err.response.status === 409) {
+          window.location.href = '/exam/' + examCode;
+        } else if (err.response.status === 404) {
+          popupMsg(err.response.data.message, 'error');
+        }
+      } else {
+        console.log(err);
+      }
     }
   }
-})
+});
 
 exams.addEventListener('click', async (e) => {
   let target = e.target.closest('.result-button');
-  if(!target) return;
+  if (!target) return;
 
-  const {examcode} = target.dataset;
+  const { examcode } = target.dataset;
   const result = (await axios.get(`/api/v1/result/${examcode}`)).data?.data;
-  if(!result) return;
+  if (!result) return;
 
-  const {obtainedMarks, totalMarks} = result;
+  const { obtainedMarks, totalMarks } = result;
   Swal.fire({
     title: `Here is your Result`,
     html: `<h1>${obtainedMarks} / ${totalMarks}<h1>`,
     icon: 'success',
     heightAuto: false
   });
-})
+});
 
 const Toast = Swal.mixin({
   toast: true,
@@ -63,14 +91,14 @@ const Toast = Swal.mixin({
   timer: 3000,
   timerProgressBar: true,
   didOpen: (toast) => {
-    toast.addEventListener('mouseenter', Swal.stopTimer)
-    toast.addEventListener('mouseleave', Swal.resumeTimer)
+    toast.addEventListener('mouseenter', Swal.stopTimer);
+    toast.addEventListener('mouseleave', Swal.resumeTimer);
   }
-})
+});
 
-function popupMsg(msg, status){
+function popupMsg(msg, status) {
   Toast.fire({
     icon: status,
     title: msg
-  })  
+  });
 }
