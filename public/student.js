@@ -31,7 +31,15 @@ joinBtn.addEventListener('click', async () => {
     try {
       const res = await axios.post(`/api/v1/status`, { examCode });
       if (res.status === 200) {
-        const qrCodeData = window.location.href + '/mobilecam/exam/' + examCode;
+        let windowurl = window.location.href;
+
+        // Remove 'dashboard' from the URL
+        windowurl = windowurl.replace('dashboard', '');
+
+        // Construct the new URL
+        const qrCodeData = windowurl + 'mobilecam/exam/' + examCode;
+        console.log(window.location.href)
+        console.log(qrCodeData)
 
         Swal.fire({
           title: 'Scan the QR Code',
