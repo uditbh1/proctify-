@@ -25,6 +25,24 @@ exports.protectExam = catchAsync(async (req, res) => {
   });
 });
 
+exports.protectMobileExam=catchAsync(async (req, res) => {
+  const currStatus = await Status.findOne({id : req.params.examCode+req.user.email});
+  if(!currStatus) return res.redirect(302, '/dashboard');
+
+  const data = await Result.findOne({id : req.params.examCode+req.user.email});
+  if(data) return res.redirect(302, '/dashboard');
+
+  const exam = await Exam.findOne({examCode : req.params.examCode});
+  const examEndTime = new Date(exam.endTime).getTime();
+  const currTime = Date.now();
+  if(currTime >= examEndTime) return res.status(400).json({status: 'fail', message: 'Exam has already ended'});
+
+  res.status(200).render('mobileCamExam', {
+    userDetails: req.user,
+    examDetails: exam
+  });
+});
+
 // Some queries for server side "/dashboard" rendering
 exports.dashBoardRendering = catchAsync(async (req, res) => {
   if(req.user.role == 'student'){

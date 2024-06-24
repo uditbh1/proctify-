@@ -9,7 +9,10 @@ let quesContent = document.querySelector(".ques-content");
 let options = document.querySelector(".options");
 let nextBtn = document.querySelector(".next");
 const quesElem = document.querySelector('#increment');
-const cameraElem = document.querySelector('video');
+const cameraElem = document.querySelector('.camera video');
+const cameraCanvas = document.querySelector('.camera canvas');
+const mobileCameraElem = document.querySelector('.mobile-camera video');
+const mobileCameraCanvas = document.querySelector('.mobile-camera canvas');
 const submitBtn = document.querySelector('.submitBtn');
 const ques = document.querySelector('.ques');
 const examCode = document.querySelector('.examCode');
@@ -71,14 +74,21 @@ function formatTime(ms){
 let model;
 async function startStreaming(){
   try{
-    const stream = await navigator.mediaDevices.getUserMedia({
+    const cameraStream = await navigator.mediaDevices.getUserMedia({
         video : true,
         audio: false
     });
-    cameraElem.srcObject = stream;
+    const mobileCameraStream = await navigator.mediaDevices.getUserMedia({
+        video : true,
+        audio: false
+    });
+
+    cameraElem.srcObject = cameraStream;
+    mobileCameraElem.srcObject = mobileCameraStream;
 
     model = await cocoSsd.load();
-    detectFrame(cameraElem, model); 
+    detectFrame(cameraElem, cameraCanvas, model); 
+    detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
   }
   catch(err){
     await Swal.fire({
@@ -91,23 +101,23 @@ async function startStreaming(){
   }
 }
 
-async function detectFrame(video=cameraElem, model){
+async function detectFrame(video, canvas, model){
 // console.log('Detecting frame');
 const predictions = await model.detect(video);
 // console.log(predictions);
-renderPredictions(predictions);
+renderPredictions(predictions, canvas);
 
 if(detect){
   requestAnimationFrame(() => {
-    detectFrame(video, model);
+    detectFrame(video, canvas, model);
   });
 }
 }
 
-function renderPredictions(predictions){
+function renderPredictions(predictions, canvas){
 // setting up the canvas for drawing rectangles and printing 
 // prediction text
-const ctx = document.querySelector('canvas').getContext("2d");
+const ctx = canvas.getContext("2d");
 ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 ctx.font = "18px sans-serif";
 ctx.textBaseline = "top";
@@ -161,7 +171,7 @@ else if (persons.length === 0) {
     heightAuto: false
   }).then(() => {
     detect = true;
-    detectFrame(cameraElem, model);
+    detectFrame(video, canvas, model);
   });
 }
 
@@ -187,7 +197,7 @@ predictions.forEach(prediction => {
       heightAuto: false
     }).then(() => {
       detect = true;
-      detectFrame(cameraElem, model);
+      detectFrame(video, canvas, model);
     });
   }
 })
@@ -306,4 +316,3 @@ function report(data){
     ...data
   }).then().catch((err) => {console.log(err)})
 }
-

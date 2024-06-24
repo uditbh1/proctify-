@@ -1,0 +1,94 @@
+doctype html
+html
+  head
+    meta(http-equiv='Content-Type' content='text/html; charset=UTF-8')
+    meta(http-equiv='X-UA-Compatible' content='IE=edge')
+    meta(name='viewport' content='width=device-width, initial-scale=1.0')
+    title Mobile Camera Exam
+    link(rel='stylesheet' href='https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap')
+    style.
+      * {
+        outline: none;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --theme-bg-color: rgba(16 18 27 / 40%);
+        --border-color: rgba(113 119 144 / 25%);
+        --theme-color: #f9fafb;
+        --inactive-color: rgb(113 119 144 / 78%);
+        --body-font: "Poppins", sans-serif;
+        --hover-menu-bg: rgba(12 15 25 / 30%);
+        --content-title-color: #999ba5;
+        --content-bg: rgb(146 151 179 / 13%);
+        --button-inactive: rgb(249 250 251 / 55%);
+        --dropdown-bg: #21242d;
+        --dropdown-hover: rgb(42 46 60);
+        --popup-bg: rgb(22 25 37);
+        --search-bg: #14162b;
+        --overlay-bg: rgba(36, 39, 59, 0.3);
+        --scrollbar-bg: rgb(1 2 3 / 40%);
+      }
+
+      html {
+        box-sizing: border-box;
+        -webkit-font-smoothing: antialiased;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      body {
+        margin: 0px;
+        max-width: 100%;
+        overflow-x: hidden;
+        font-family: var(--body-font);
+        background-image: url("/bg.jpg");
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        width: 100%;
+        height: 100vh !important;
+      }
+
+      .camera-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .camera video, .camera canvas {
+        width: 100%;
+        max-width: 414px;
+        max-height: 736px;
+        border: 1px solid var(--border-color);
+        background-color: black;
+      }
+
+  body
+    .camera-container
+      h1 Mobile Camera Exam
+      .camera
+        video#videoElement(width='414' height='736' autoplay playsinline)
+        //- canvas#canvasElement(width='414' height='736')
+
+    script.
+      async function startStreaming() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+          });
+          const videoElement = document.getElementById('videoElement');
+          videoElement.srcObject = stream;
+        } catch (err) {
+          console.error('Error accessing the camera:', err);
+          alert('Please allow camera access to continue.');
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', (event) => {
+        startStreaming();
+      });
