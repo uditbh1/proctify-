@@ -70,7 +70,26 @@ function formatTime(ms){
   }
 }
 
-// Functions
+// // Functions
+// let model;
+// async function startStreaming(){
+//   try{
+//     const cameraStream = await navigator.mediaDevices.getUserMedia({
+//         video : true,
+//         audio: false
+//     });
+//     const mobileCameraStream = await navigator.mediaDevices.getUserMedia({
+//         video : true,
+//         audio: false
+//     });
+
+//     cameraElem.srcObject = cameraStream;
+//     mobileCameraElem.srcObject = mobileCameraStream;
+
+//     model = await cocoSsd.load();
+//     detectFrame(cameraElem, cameraCanvas, model); 
+//     detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
+//   }
 let model;
 async function startStreaming(){
   try{
@@ -78,17 +97,16 @@ async function startStreaming(){
         video : true,
         audio: false
     });
-    const mobileCameraStream = await navigator.mediaDevices.getUserMedia({
-        video : true,
-        audio: false
-    });
 
     cameraElem.srcObject = cameraStream;
-    mobileCameraElem.srcObject = mobileCameraStream;
+    mobileCameraElem.addEventListener('loadedmetadata', () => {
+      model = cocoSsd.load().then((loadedModel) => {
+        model = loadedModel;
+        detectFrame(cameraElem, cameraCanvas, model); 
+        detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
+      });
+    });
 
-    model = await cocoSsd.load();
-    detectFrame(cameraElem, cameraCanvas, model); 
-    detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
   }
   catch(err){
     await Swal.fire({

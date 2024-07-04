@@ -1,6 +1,7 @@
 const AppError = require('./AppError');
 
 const sendDevErr = function (err, req, res) {
+  console.error('ERROR :', err); // Log error to the console
   res.status(err.statusCode).json({
     status: err.status,
     err: err,
@@ -11,12 +12,13 @@ const sendDevErr = function (err, req, res) {
 const sendProdError = function (err, req, res) {
   // If err is trusted (we defined it with our own message and code)
   if (err.trustedError) {
+    console.error('ERROR :', err);
     return res.status(err.statusCode).json({
       status: err.status,
       message: err.message,
     });
   }
-
+  console.error('ERROR 💥:', err);
   // Programming errors, which caught by our catchAsync() - So do not leak error details to client
   res.status(500).render('error', {
     errorCode: 500,

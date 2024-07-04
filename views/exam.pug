@@ -16,10 +16,10 @@ html
   body
     .camera
       video#cameraVideo(width='300' height='250' autoplay)
-      canvas(width='300' height='250' style='border:1px solid #d3d3d3;')
+      canvas#cameraCanvas(width='300' height='250' style='border:1px solid #d3d3d3;')
     .mobile-camera
-      video#mobileCameraVideo(width='300' height='250' autoplay)
-      canvas(width='300' height='250' style='border:1px solid #d3d3d3;')
+      video#mobileCameraVideo(width='300' height='250' autoplay playsinline)
+      canvas#mobileCameraCanvas(width='300' height='250' style='border:1px solid #d3d3d3;')
     .wrapper
       .left-side
         .main-header-heading Question Panel
@@ -42,3 +42,39 @@ html
         p.ques(style="display: none;") #{JSON.stringify(examDetails.questions)}
         p.examCode(style="display: none;") #{examDetails.examCode}
     script(src='/inner.js')
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js")
+    script(src="https://webrtc.github.io/adapter/adapter-latest.js")
+    script.
+      const socket = io('http://localhost:3000');
+      //- const socket = io('http://172.26.101.10:3000');
+      let pc = new RTCPeerConnection();
+
+      // Handle ICE candidates
+      pc.onicecandidate = event => {
+        if (event.candidate) {
+          socket.emit('ice-candidate', event.candidate);
+        }
+      };
+
+      // Handle track event to receive remote stream
+      pc.ontrack = event => {
+        const [stream] = event.streams;
+        const mobileCameraVideo = document.getElementById('mobileCameraVideo');
+        mobileCameraVideo.srcObject = stream;
+      };
+
+      // Create an answer for the received offer
+      socket.on('offer', async offer => {
+        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('answer', answer);
+      });
+
+      socket.on('ice-candidate', async candidate => {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.error('Error adding received ice candidate', e);
+        }
+      });

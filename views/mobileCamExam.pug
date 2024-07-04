@@ -72,9 +72,15 @@ html
       h1 Mobile Camera Exam
       .camera
         video#videoElement(width='414' height='736' autoplay playsinline)
-        //- canvas#canvasElement(width='414' height='736')
 
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js")
+    script(src="https://webrtc.github.io/adapter/adapter-latest.js")
     script.
+      //- const socket = io();
+      const socket = io('http://localhost:3000');
+      //- const socket = io('http://172.26.101.10:3000');
+      let pc;
+
       async function startStreaming() {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -83,11 +89,41 @@ html
           });
           const videoElement = document.getElementById('videoElement');
           videoElement.srcObject = stream;
+
+          // Initialize PeerConnection
+          pc = new RTCPeerConnection();
+
+          // Add stream to PeerConnection
+          stream.getTracks().forEach(track => pc.addTrack(track, stream));
+
+          // Handle ICE candidates
+          pc.onicecandidate = event => {
+            if (event.candidate) {
+              socket.emit('ice-candidate', event.candidate);
+            }
+          };
+
+          // Create an offer and set local description
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          socket.emit('offer', offer);
         } catch (err) {
           console.error('Error accessing the camera:', err);
           alert('Please allow camera access to continue.');
         }
       }
+
+      socket.on('answer', async answer => {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      });
+
+      socket.on('ice-candidate', async candidate => {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (e) {
+          console.error('Error adding received ice candidate', e);
+        }
+      });
 
       document.addEventListener('DOMContentLoaded', (event) => {
         startStreaming();

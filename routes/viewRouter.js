@@ -6,6 +6,7 @@ const Router = express.Router();
 const handleLandingPage = (req, res) =>  res.status(200).render('landing', {loggedIn : req.cookies?.JWT});
 
 Router.get('/exam/:examCode', protectView, protectExam, (_, res) => render(res, 'exam'));
+// Router.get('/mobilecam/exam/:examCode', protectView, protectMobileExam, (_, res) => render(res, 'mobileCamExam'));
 Router.get('/mobilecam/exam/:examCode', protectView, protectMobileExam, (_, res) => render(res, 'mobileCamExam'));
 Router.get('/dashboard', protectView, dashBoardRendering);
 Router.get('/login', viewAuthHandler, (_, res) => render(res, 'login'));

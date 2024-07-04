@@ -1,9 +1,19 @@
 const authHandler = async (url, data) => {
   try{
-    const res = await axios({ url, method: 'POST', data });
-    if(res.status === 200) window.location.href = '/dashboard';
+    const res = await axios({ url, method: 'POST', data, withCredentials: true });
+    console.log('Login successful, redirecting to dashboard');
+    if (res.status === 200) {
+      console.log('Login successful, redirecting to dashboard');
+      window.location.href = '/dashboard';
+    }
+    else {
+      console.log('Login failed:', res);
+    }
   }
   catch(err){
+    console.log('Error:', err);
+    // Send error to the server for logging
+    axios.post('/log-error', { error: err.message });
     Swal.fire("Note",  err.response.data.message,  'error').then(() => {
     });
   }

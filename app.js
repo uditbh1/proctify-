@@ -6,7 +6,7 @@ const cookieParser = require("cookie-parser");
 const rateLimit = require('express-rate-limit');
 
 // Setting up environment variables for development purpose
-dotenv.config({path : './config.env'});
+dotenv.config({ path: './config.env' });
 
 // Local Modules
 const globalErrorHandler = require('./utils/globalErrorHandler');
@@ -21,6 +21,17 @@ const limiter = rateLimit({
 });
 
 const app = express();
+
+// CORS
+const cors = require('cors');
+
+// Add CORS middleware
+app.use(cors({
+  // origin: 'http://172.26.101.10:8000', // Replace this with the actual origin or use a function to dynamically set it
+  // origin:'http://172.26.83.75:8000',   //pc
+  origin:'*',   //pc
+  credentials: true // Allow credentials (cookies)
+}));
 
 // *********************
 //  *** MIDDLEWARES ***
@@ -43,8 +54,14 @@ app.use(express.json({ limit: '5kb' }));
 app.use('/api', apiRouter);
 app.use('/', viewRouter);
 
-// Global error handler middleware 
-app.use(globalErrorHandler); 
+// Route to handle logging errors
+app.post('/log-error', (req, res) => {
+  console.error('Client Error:', req.body.error);
+  res.sendStatus(200);
+});
+
+// Global error handler middleware
+app.use(globalErrorHandler);
 
 // ****************
 //  *** Server and Database ***
@@ -53,6 +70,10 @@ mongoose.connect(process.env.MONGO_URL).then(() => {
   console.log('Database connected');
 });
 
-app.listen(process.env.PORT || 8000, () => {
-  console.log('listening on port');
+// app.listen(process.env.PORT || 8000, () => {
+//   console.log('listening on port');
+// });
+
+app.listen(process.env.PORT || 8000, '0.0.0.0', () => {
+  console.log('listening on port 8000');
 });

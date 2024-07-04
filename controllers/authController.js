@@ -13,19 +13,23 @@ const signToken = (id) =>
 const createSendToken = function (id, statusCode, message, res) {
   // Generating JWT tokens
   const token = signToken(id);
+  console.log(`Token created: ${token}`); // Log token
 
   // Creating JWT cookie
   res.cookie('JWT', token, {
     httpOnly: true,
     expires: new Date(Date.now() + (process.env.COOKIES_EXPIRES_IN * 24 * 60 * 60 * 1000)), // days to milliseconds
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'None', // This allows cross-site cookies
+    secure: process.env.NODE_ENV === 'production'
   });
   // Sending response
   res.status(statusCode).json({
     status: 'success',
     message,
   });
+  console.log(`Response sent with status: ${statusCode}`); // Log response
 };
+
 
 exports.restrictTo = function (...roles) {
   return function (req, _, next) {
@@ -54,6 +58,8 @@ exports.protect = catchAsync(async (req, res, next) => {
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
+  // Log the request details
+  console.log(`Login attempt with email: ${email}`);
   // 1. Check if email, password is not empty
   if (!email || !password) {
     return next(new AppError('Please enter your email and password', 400));
@@ -67,6 +73,8 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user || !isPassCorrect) {
     return next(new AppError('Either email or password is incorrect'));
   }
+  // Log successful login
+  console.log(`User ${email} logged in successfully`);
 
   // 3. Create JWT token
   createSendToken(user._id, 200, 'Login successful', res);
@@ -100,12 +108,26 @@ exports.info = catchAsync(async (req, res) => {
   })
 });
 
+
+
 exports.viewAuthHandler = catchAsync(async (req, res, next) => {
   const token = req.cookies && req.cookies.JWT;
-  if(token){
-    const payload = await promisify(JWT.verify)(token, process.env.JWT_SECRET);
-    const currentUser = await User.findById(payload.id);
-    if(currentUser) return res.redirect(302, '/dashboard');
+  console.log('Token from cookies:', token); // Log token
+
+  if (token) {
+    try {
+      const payload = await promisify(JWT.verify)(token, process.env.JWT_SECRET);
+      console.log('Payload:', payload); // Log payload
+
+      const currentUser = await User.findById(payload.id);
+      console.log('Current User:', currentUser); // Log current user
+
+      if (currentUser) {
+        return res.redirect(302, '/dashboard');
+      }
+    } catch (err) {
+      console.error('Error verifying token or finding user:', err); // Log errors
+    }
   }
 
   next();
@@ -113,16 +135,36 @@ exports.viewAuthHandler = catchAsync(async (req, res, next) => {
 
 exports.protectView = catchAsync(async (req, res, next) => {
   const token = req.cookies && req.cookies.JWT;
-  if(!token) return res.redirect(302, '/login');
-  if(token){
-    const payload = await promisify(JWT.verify)(token, process.env.JWT_SECRET);
-    const currentUser = await User.findById(payload.id);
-    if(!currentUser) return res.redirect(302, '/login');
-    else req.user = currentUser;
+  console.log('Token from cookies:', token); // Log token
+
+  if (!token) {
+    console.log('No token found, redirecting to login'); // Log no token case
+    return res.redirect(302, '/login');
+  }
+
+  if (token) {
+    try {
+      const payload = await promisify(JWT.verify)(token, process.env.JWT_SECRET);
+      console.log('Payload:', payload); // Log payload
+
+      const currentUser = await User.findById(payload.id);
+      console.log('Current User:', currentUser); // Log current user
+
+      if (!currentUser) {
+        console.log('User not found, redirecting to login'); // Log user not found case
+        return res.redirect(302, '/login');
+      } else {
+        req.user = currentUser;
+      }
+    } catch (err) {
+      console.error('Error verifying token or finding user:', err); // Log errors
+      return res.redirect(302, '/login');
+    }
   }
 
   next();
 });
+
 
 exports.sendMail = catchAsync(async function(req, res) {
   console.log(req.body);
