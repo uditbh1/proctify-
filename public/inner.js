@@ -1,3 +1,4 @@
+
 let ans = [];
 
 // ********************
@@ -90,44 +91,25 @@ function formatTime(ms){
 //     detectFrame(cameraElem, cameraCanvas, model); 
 //     detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
 //   }
-// Define variables at a higher scope
-let videoGlobal, canvasGlobal, modelGlobal;
-let mobileVideoGlobal, mobileCanvasGlobal;
-
-async function startStreaming() {
-  try {
+let model;
+async function startStreaming(){
+  try{
     const cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: true, // Ensure video dimensions are set correctly
-      audio: false
+        video : true,
+        audio: false
     });
 
-    const mobileCameraStream = await navigator.mediaDevices.getUserMedia({
-      video: true, // Ensure video dimensions are set correctly
-      audio: false
+    cameraElem.srcObject = cameraStream;
+    mobileCameraElem.addEventListener('loadedmetadata', () => {
+      model = cocoSsd.load().then((loadedModel) => {
+        model = loadedModel;
+        detectFrame(cameraElem, cameraCanvas, model); 
+        detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
+      });
     });
 
-    videoGlobal = cameraElem;
-    canvasGlobal = cameraCanvas;
-    videoGlobal.srcObject = cameraStream;
-
-    mobileVideoGlobal = mobileCameraElem;
-    mobileCanvasGlobal = mobileCameraCanvas;
-    mobileVideoGlobal.srcObject = mobileCameraStream;
-
-    // Wait for video elements to be ready
-    videoGlobal.onloadedmetadata = () => {
-      videoGlobal.play();
-      mobileVideoGlobal.onloadedmetadata = () => {
-        mobileVideoGlobal.play();
-        // Load TensorFlow model after video elements are ready
-        cocoSsd.load().then((loadedModel) => {
-          modelGlobal = loadedModel;
-          detectFrame(videoGlobal, canvasGlobal, modelGlobal);
-          detectFrame(mobileVideoGlobal, mobileCanvasGlobal, modelGlobal);
-        });
-      };
-    };
-  } catch (err) {
+  }
+  catch(err){
     await Swal.fire({
       title: 'Enable Camera',
       html: "Enable to continue the exam",
@@ -138,114 +120,107 @@ async function startStreaming() {
   }
 }
 
+async function detectFrame(video, canvas, model){
+// console.log('Detecting frame');
+const predictions = await model.detect(video);
+// console.log(predictions);
+renderPredictions(predictions, canvas);
 
-async function detectFrame(video, canvas, model) {
-  // Check if the video has valid dimensions
-  if (video.videoWidth === 0 || video.videoHeight === 0) {
-    requestAnimationFrame(() => detectFrame(video, canvas, model));
-    return;
-  }
-
-  const predictions = await model.detect(video);
-
-  // Filter predictions by confidence score (e.g., only keep predictions with a confidence > 0.6)
-  const filteredPredictions = predictions.filter(prediction => prediction.score > 0.6);
-
-  renderPredictions(filteredPredictions, canvas);
-
-  if (detect) {
-    requestAnimationFrame(() => {
-      detectFrame(video, canvas, model);
-    });
-  }
+if(detect){
+  requestAnimationFrame(() => {
+    detectFrame(video, canvas, model);
+  });
+}
 }
 
-
 function renderPredictions(predictions, canvas){
-  const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.font = "18px sans-serif";
-  ctx.textBaseline = "top";
+// setting up the canvas for drawing rectangles and printing 
+// prediction text
+const ctx = canvas.getContext("2d");
+ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+ctx.font = "18px sans-serif";
+ctx.textBaseline = "top";
 
-  predictions.forEach(prediction => {
-    const x = prediction.bbox[0];
-    const y = prediction.bbox[1];
-    const width = prediction.bbox[2];
-    const height = prediction.bbox[3];
+// looping on predictions and drawing the bounding box for each object
+// and the text label background
+predictions.forEach(prediction => {
+  const x = prediction.bbox[0];
+  const y = prediction.bbox[1];
+  const width = prediction.bbox[2];
+  const height = prediction.bbox[3];
 
-    ctx.strokeStyle = "#333399";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, width, height);
+  // Draw the bounding circle.
+  ctx.strokeStyle = "#333399";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, width, height);
 
-    ctx.fillStyle = "#333399";
-    const textWidth = ctx.measureText(prediction.class).width;
-    const textHeight = parseInt("16px sans-serif", 10); 
-    ctx.fillRect(x, y, textWidth + 8, textHeight + 8);
-  });
+  // Draw the label background.
+  ctx.fillStyle = "#333399";
+  const textWidth = ctx.measureText(prediction.class).width;
+  const textHeight = parseInt("16px sans-serif", 10); // base 10
+  ctx.fillRect(x, y, textWidth + 8, textHeight + 8);
+});
 
-  predictions.forEach(prediction => {
-    const x = prediction.bbox[0];
-    const y = prediction.bbox[1];
-    ctx.fillStyle = "#FFFFFF";
+ // Looping over all predictions and drawing text (prediction class)
+ predictions.forEach(prediction => {
+  const x = prediction.bbox[0];
+  const y = prediction.bbox[1];
+  
+  ctx.fillStyle = "#FFFFFF";
 
-    if (prediction.class === "person" || prediction.class === "cell phone" || prediction.class === "book" || prediction.class === "laptop") {
-      ctx.fillText(prediction.class, x, y);
-    }
-  });
-
-  const persons = predictions.filter(prediction => prediction.class == 'person');
-  if (persons.length === 0 && noPersonCount < 50){
-    noPersonCount++;
+  // Draw the text last to ensure it's on top.
+  if (prediction.class === "person" || prediction.class === "cell phone" || prediction.class === "book" || prediction.class === "laptop") {
+    ctx.fillText(prediction.class, x, y);
   }
-  else if (persons.length === 0) {
-    noPersonCount = 0;
+});
+
+// if face is not visible till 50 consecutive frames, face is missing, throw an error
+const persons = predictions.filter(prediction => prediction.class == 'person');
+if (persons.length === 0 && noPersonCount < 50){
+  noPersonCount++;
+}
+else if (persons.length === 0) {
+  noPersonCount = 0;
+  detect = false;
+  report({faceNotVisible: true});
+  Swal.fire({
+    title: `No face Detected`,
+    html: `This action has been recorded`,
+    icon: 'error',
+    heightAuto: false
+  }).then(() => {
+    detect = true;
+    detectFrame(video, canvas, model);
+  });
+}
+
+// loop over all predictions and check if restricted items are present
+const restrictedItems = ['cell phone', 'book', 'laptop', 'Multiple faces'];
+
+let faces = 0;
+predictions.forEach(prediction => {
+  if(prediction.class == 'person') faces++;
+  if(faces > 1) prediction.class = 'Multiple faces';
+
+  if(restrictedItems.includes(prediction.class)){
+    const item = restrictedItems.find(item => item == prediction.class);
+
     detect = false;
-    report({faceNotVisible: true});
+    if(item == 'cell phone') report({mobileFound: true});
+    else if(item == 'Multiple faces') report({multipleFaceFound: true});
+    else report({prohibitedObjectFound: true});
     Swal.fire({
-      title: `No face Detected`,
+      title: `${item} Detected`,
       html: `This action has been recorded`,
       icon: 'error',
       heightAuto: false
     }).then(() => {
       detect = true;
-      restartAllDetections(); // Restart detection for both cameras
+      detectFrame(video, canvas, model);
     });
   }
-
-  const restrictedItems = ['cell phone', 'book', 'laptop', 'Multiple faces'];
-
-  let faces = 0;
-  predictions.forEach(prediction => {
-    if(prediction.class == 'person') faces++;
-    if(faces > 1) prediction.class = 'Multiple faces';
-
-    if(restrictedItems.includes(prediction.class)){
-      const item = restrictedItems.find(item => item == prediction.class);
-
-      detect = false;
-      if(item == 'cell phone') report({mobileFound: true});
-      else if(item == 'Multiple faces') report({multipleFaceFound: true});
-      else report({prohibitedObjectFound: true});
-      Swal.fire({
-        title: `${item} Detected`,
-        html: `This action has been recorded`,
-        icon: 'error',
-        heightAuto: false
-      }).then(() => {
-        detect = true;
-        restartAllDetections(); // Restart detection for both cameras
-      });
-    }
-  });
-}
-
-function restartAllDetections() {
-  detectFrame(videoGlobal, canvasGlobal, modelGlobal);
-  detectFrame(mobileVideoGlobal, mobileCanvasGlobal, modelGlobal);
-}
-
-
-
+})
+};
 
 // ********************
 // **** Event Callback Functions *****
@@ -360,339 +335,3 @@ function report(data){
     ...data
   }).then().catch((err) => {console.log(err)})
 }
-// let ans = [];
-
-// // ********************
-// // **** Selectors *****
-// // ********************
-
-// let cards = document.querySelector(".cards");
-// let quesContent = document.querySelector(".ques-content");
-// let options = document.querySelector(".options");
-// let nextBtn = document.querySelector(".next");
-// const quesElem = document.querySelector('#increment');
-// const cameraElem = document.querySelector('.camera video');
-// const cameraCanvas = document.querySelector('.camera canvas');
-// const mobileCameraElem = document.querySelector('.mobile-camera video');
-// const mobileCameraCanvas = document.querySelector('.mobile-camera canvas');
-// const submitBtn = document.querySelector('.submitBtn');
-// const ques = document.querySelector('.ques');
-// const examCode = document.querySelector('.examCode');
-// const timerElem = document.querySelector('.timer');
-
-// let noPersonCount = 0;
-// let detect = true;
-// let keyCount = 1, tabCount = 1;
-// let timer = 0;
-// let timerInterval;
-
-// (() => {
-//   timer = Number(timerElem.innerText);
-//   formatTime(timer);
-//   timerInterval = setInterval(() => formatTime(timer), 1000);
-
-//   data = JSON.parse(ques.innerText);
-//   startStreaming();
-//   changeQuestion(0);
-
-//   document.addEventListener("visibilitychange", handleVisibilityChange, false);
-//   document.addEventListener('contextmenu', (e) => e.preventDefault());
-//   document.addEventListener('keydown',handleKeyPress);
-
-//   ans = new Array(data.length+1);
-// })();
-
-// function formatTime(ms){
-//   dateObj = new Date(ms);
-//   hours = dateObj.getUTCHours();
-//   minutes = dateObj.getUTCMinutes();
-//   seconds = dateObj.getSeconds();
-
-//   timeString = hours.toString().padStart(2, '0') + ':' + 
-//   minutes.toString().padStart(2, '0') + ':' + 
-//   seconds.toString().padStart(2, '0');
-
-//   timerElem.innerText = timeString;
-//   timer -= 1000;
-
-//   if (timer <= 60000 && timer > 59000) {
-//     Swal.fire({
-//       title: 'Only 1 Minute Left',
-//       html: "Hurry Up !!!",
-//       icon: 'error',
-//       heightAuto: false
-//     });
-//   }
-//   if( timer <= 60000){
-//     timerElem.style.color = 'red';
-//   }
-//   if( timer < 1000){
-//     submitExam();
-//     clearInterval(timerInterval);
-//   }
-// }
-
-// // // Functions
-// // let model;
-// // async function startStreaming(){
-// //   try{
-// //     const cameraStream = await navigator.mediaDevices.getUserMedia({
-// //         video : true,
-// //         audio: false
-// //     });
-// //     const mobileCameraStream = await navigator.mediaDevices.getUserMedia({
-// //         video : true,
-// //         audio: false
-// //     });
-
-// //     cameraElem.srcObject = cameraStream;
-// //     mobileCameraElem.srcObject = mobileCameraStream;
-
-// //     model = await cocoSsd.load();
-// //     detectFrame(cameraElem, cameraCanvas, model); 
-// //     detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
-// //   }
-// let model;
-// async function startStreaming(){
-//   try{
-//     const cameraStream = await navigator.mediaDevices.getUserMedia({
-//         video : true,
-//         audio: false
-//     });
-
-//     cameraElem.srcObject = cameraStream;
-//     mobileCameraElem.addEventListener('loadedmetadata', () => {
-//       model = cocoSsd.load().then((loadedModel) => {
-//         model = loadedModel;
-//         detectFrame(cameraElem, cameraCanvas, model); 
-//         detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
-//       });
-//     });
-
-//   }
-//   catch(err){
-//     await Swal.fire({
-//       title: 'Enable Camera',
-//       html: "Enable to continue the exam",
-//       icon: 'error',
-//       heightAuto: false
-//     });
-//     startStreaming();
-//   }
-// }
-
-// async function detectFrame(video, canvas, model){
-// // console.log('Detecting frame');
-// const predictions = await model.detect(video);
-// // console.log(predictions);
-// renderPredictions(predictions, canvas);
-
-// if(detect){
-//   requestAnimationFrame(() => {
-//     detectFrame(video, canvas, model);
-//   });
-// }
-// }
-
-// function renderPredictions(predictions, canvas){
-// // setting up the canvas for drawing rectangles and printing 
-// // prediction text
-// const ctx = canvas.getContext("2d");
-// ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-// ctx.font = "18px sans-serif";
-// ctx.textBaseline = "top";
-
-// // looping on predictions and drawing the bounding box for each object
-// // and the text label background
-// predictions.forEach(prediction => {
-//   const x = prediction.bbox[0];
-//   const y = prediction.bbox[1];
-//   const width = prediction.bbox[2];
-//   const height = prediction.bbox[3];
-
-//   // Draw the bounding circle.
-//   ctx.strokeStyle = "#333399";
-//   ctx.lineWidth = 2;
-//   ctx.strokeRect(x, y, width, height);
-
-//   // Draw the label background.
-//   ctx.fillStyle = "#333399";
-//   const textWidth = ctx.measureText(prediction.class).width;
-//   const textHeight = parseInt("16px sans-serif", 10); // base 10
-//   ctx.fillRect(x, y, textWidth + 8, textHeight + 8);
-// });
-
-//  // Looping over all predictions and drawing text (prediction class)
-//  predictions.forEach(prediction => {
-//   const x = prediction.bbox[0];
-//   const y = prediction.bbox[1];
-  
-//   ctx.fillStyle = "#FFFFFF";
-
-//   // Draw the text last to ensure it's on top.
-//   if (prediction.class === "person" || prediction.class === "cell phone" || prediction.class === "book" || prediction.class === "laptop") {
-//     ctx.fillText(prediction.class, x, y);
-//   }
-// });
-
-// // if face is not visible till 50 consecutive frames, face is missing, throw an error
-// const persons = predictions.filter(prediction => prediction.class == 'person');
-// if (persons.length === 0 && noPersonCount < 50){
-//   noPersonCount++;
-// }
-// else if (persons.length === 0) {
-//   noPersonCount = 0;
-//   detect = false;
-//   report({faceNotVisible: true});
-//   Swal.fire({
-//     title: `No face Detected`,
-//     html: `This action has been recorded`,
-//     icon: 'error',
-//     heightAuto: false
-//   }).then(() => {
-//     detect = true;
-//     detectFrame(video, canvas, model);
-//   });
-// }
-
-// // loop over all predictions and check if restricted items are present
-// const restrictedItems = ['cell phone', 'book', 'laptop', 'Multiple faces'];
-
-// let faces = 0;
-// predictions.forEach(prediction => {
-//   if(prediction.class == 'person') faces++;
-//   if(faces > 1) prediction.class = 'Multiple faces';
-
-//   if(restrictedItems.includes(prediction.class)){
-//     const item = restrictedItems.find(item => item == prediction.class);
-
-//     detect = false;
-//     if(item == 'cell phone') report({mobileFound: true});
-//     else if(item == 'Multiple faces') report({multipleFaceFound: true});
-//     else report({prohibitedObjectFound: true});
-//     Swal.fire({
-//       title: `${item} Detected`,
-//       html: `This action has been recorded`,
-//       icon: 'error',
-//       heightAuto: false
-//     }).then(() => {
-//       detect = true;
-//       detectFrame(video, canvas, model);
-//     });
-//   }
-// })
-// };
-
-// // ********************
-// // **** Event Callback Functions *****
-// // ********************
-
-// function changeQuestion(selectIdx){
-//   if(selectIdx > data.length-1) return;
-
-//   // Removing and adding clicked class
-//   const idx = quesElem.dataset.ques - 1;
-//   document.querySelectorAll('.app-card')[idx].classList.remove('clicked');
-//   document.querySelectorAll('.app-card')[selectIdx].classList.add('clicked');
-
-//   // Question No. Update
-//   quesElem.innerText = `Question No. ${selectIdx+1}`;
-//   quesElem.setAttribute('data-ques', selectIdx+1);
-
-//   // Question Update
-//   quesContent.innerText = data[selectIdx].ques;
-
-//   // Options Update
-//   options.innerHTML = ``;
-//   data[selectIdx].options.forEach((optionText, idx) => options.innerHTML += `<div class="option" data-no='${idx+1}'>${optionText}</div>`);
-
-//   // Select option if answered
-//   const quesNo = selectIdx+1;
-//   const optionNo = ans[quesNo];
-//   optionNo != null ? options.children[optionNo-1].classList.add('clicked') : undefined;
-// }
-
-// function handleOptionClick(quesNo, optionNo){
-//   const prevOptionNo = ans[quesNo];
-//   prevOptionNo != null ? options.children[prevOptionNo-1].classList.remove('clicked') : undefined;
-
-//   options.children[optionNo-1].classList.add('clicked');
-//   document.querySelector('.clicked').classList.add('selected');
-//   ans[quesNo] = optionNo;
-// }
-
-// function handleKeyPress(e){
-//   if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
-//     report({keyPressCount : keyCount});
-//     keyCount++;
-//     Swal.fire({
-//       title: 'Modifier Key Pressed',
-//       html: "Action has been Recorded",
-//       icon: 'error',
-//       heightAuto: false
-//     });
-//   }
-// }
-
-// function handleVisibilityChange() {
-//   if (document.hidden) {
-//     report({tabSwitchCount : tabCount});
-//     tabCount++;
-//     Swal.fire({
-//       title: "Changed Tab Detected",
-//       html: "Action has been Recorded",
-//       icon: 'error',
-//       heightAuto: false
-//     });
-//   }
-// }
-
-// // ********************
-// // **** EVENTS *****
-// // ********************
-
-// nextBtn.onclick = () => changeQuestion(quesElem.dataset.ques*1);
-// submitBtn.onclick = submitExam;
-
-// cards.onclick = function(e) {
-//   let target = e.target.closest('.app-card');
-//   if(!target) return;
-
-//   const selectIdx = target.dataset.ques - 1;
-//   changeQuestion(selectIdx);
-// }
-
-// options.onclick = function(e){
-//   let target = e.target.closest(".option");
-//   if(target==null) return;
-
-//   handleOptionClick(quesElem.dataset.ques*1, target.dataset.no*1);
-// }
-
-// async function submitExam (){
-//   const res = await axios.post('/api/v1/result', {
-//     examCode: examCode.innerText,
-//     ans: ans.slice(1)
-//   });
-
-//   if(res.status == 200){
-//     setTimeout(() => window.location.href='/dashboard', 2000);
-//     await Swal.fire({
-//       title: `Exam Submitted`,
-//       html: `You will be redirected to dashboard`,
-//       icon: 'success',
-//       heightAuto: false
-//     })
-//     window.location.href='/dashboard';
-//   }
-//   else{
-//     window.location.href='/dashboard';
-//   }
-// }
-
-// function report(data){
-//   axios.patch('/api/v1/status', {
-//     examCode: examCode.innerText,
-//     ...data
-//   }).then().catch((err) => {console.log(err)})
-// }
