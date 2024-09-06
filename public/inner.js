@@ -1,10 +1,4 @@
-
 let ans = [];
-
-// ********************
-// **** Selectors *****
-// ********************
-
 let cards = document.querySelector(".cards");
 let quesContent = document.querySelector(".ques-content");
 let options = document.querySelector(".options");
@@ -25,6 +19,16 @@ let keyCount = 1, tabCount = 1;
 let timer = 0;
 let timerInterval;
 
+let videoGlobal, canvasGlobal, modelGlobal;
+let mobileVideoGlobal, mobileCanvasGlobal, mobileModelGlobal;
+
+const detectionInterval = 500;
+
+let lastDetectionTimeCamera = 0;
+let lastDetectionTimeMobileCamera = 0;
+
+let alertActive = false;
+
 (() => {
   timer = Number(timerElem.innerText);
   formatTime(timer);
@@ -36,80 +40,78 @@ let timerInterval;
 
   document.addEventListener("visibilitychange", handleVisibilityChange, false);
   document.addEventListener('contextmenu', (e) => e.preventDefault());
-  document.addEventListener('keydown',handleKeyPress);
+  document.addEventListener('keydown', handleKeyPress);
 
-  ans = new Array(data.length+1);
+  ans = new Array(data.length + 1);
 })();
 
-function formatTime(ms){
-  dateObj = new Date(ms);
-  hours = dateObj.getUTCHours();
-  minutes = dateObj.getUTCMinutes();
-  seconds = dateObj.getSeconds();
+function formatTime(ms) {
+  const dateObj = new Date(ms);
+  const hours = dateObj.getUTCHours();
+  const minutes = dateObj.getUTCMinutes();
+  const seconds = dateObj.getSeconds();
 
-  timeString = hours.toString().padStart(2, '0') + ':' + 
-  minutes.toString().padStart(2, '0') + ':' + 
-  seconds.toString().padStart(2, '0');
+  const timeString = hours.toString().padStart(2, '0') + ':' + 
+    minutes.toString().padStart(2, '0') + ':' + 
+    seconds.toString().padStart(2, '0');
 
   timerElem.innerText = timeString;
   timer -= 1000;
 
-  if (timer <= 60000 && timer > 59000) {
+  if (timer <= 60000 && timer > 59000 && !alertActive) {
+    alertActive = true;
     Swal.fire({
       title: 'Only 1 Minute Left',
       html: "Hurry Up !!!",
       icon: 'error',
       heightAuto: false
+    }).then(() => {
+      alertActive = false;
     });
   }
-  if( timer <= 60000){
+
+  if (timer <= 60000) {
     timerElem.style.color = 'red';
   }
-  if( timer < 1000){
+  if (timer < 1000) {
     submitExam();
     clearInterval(timerInterval);
   }
 }
 
-// // Functions
-// let model;
-// async function startStreaming(){
-//   try{
-//     const cameraStream = await navigator.mediaDevices.getUserMedia({
-//         video : true,
-//         audio: false
-//     });
-//     const mobileCameraStream = await navigator.mediaDevices.getUserMedia({
-//         video : true,
-//         audio: false
-//     });
-
-//     cameraElem.srcObject = cameraStream;
-//     mobileCameraElem.srcObject = mobileCameraStream;
-
-//     model = await cocoSsd.load();
-//     detectFrame(cameraElem, cameraCanvas, model); 
-//     detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
-//   }
-let model;
-async function startStreaming(){
-  try{
+async function startStreaming() {
+  try {
     const cameraStream = await navigator.mediaDevices.getUserMedia({
-        video : true,
-        audio: false
+      video: true,
+      audio: false
     });
 
-    cameraElem.srcObject = cameraStream;
-    mobileCameraElem.addEventListener('loadedmetadata', () => {
-      model = cocoSsd.load().then((loadedModel) => {
-        model = loadedModel;
-        detectFrame(cameraElem, cameraCanvas, model); 
-        detectFrame(mobileCameraElem, mobileCameraCanvas, model); 
-      });
+    const mobileCameraStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false
     });
 
-  }
-  catch(err){
+    videoGlobal = cameraElem;
+    canvasGlobal = cameraCanvas;
+    videoGlobal.srcObject = cameraStream;
+
+    mobileVideoGlobal = mobileCameraElem;
+    mobileCanvasGlobal = mobileCameraCanvas;
+    mobileVideoGlobal.srcObject = mobileCameraStream;
+
+    videoGlobal.onloadedmetadata = () => {
+      videoGlobal.play();
+      mobileVideoGlobal.onloadedmetadata = () => {
+        mobileVideoGlobal.play();
+        cocoSsd.load().then((loadedModel) => {
+          modelGlobal = loadedModel;
+          mobileModelGlobal = loadedModel;
+          detectFrame(videoGlobal, canvasGlobal, modelGlobal, 'front');
+          detectFrame(mobileVideoGlobal, mobileCanvasGlobal, mobileModelGlobal, 'mobile');
+        });
+      };
+    };
+  } catch (err) {
     await Swal.fire({
       title: 'Enable Camera',
       html: "Enable to continue the exam",
@@ -120,132 +122,140 @@ async function startStreaming(){
   }
 }
 
-async function detectFrame(video, canvas, model){
-// console.log('Detecting frame');
-const predictions = await model.detect(video);
-// console.log(predictions);
-renderPredictions(predictions, canvas);
+async function detectFrame(video, canvas, model, cameraType) {
+  const currentTime = Date.now();
 
-if(detect){
-  requestAnimationFrame(() => {
-    detectFrame(video, canvas, model);
-  });
-}
-}
-
-function renderPredictions(predictions, canvas){
-// setting up the canvas for drawing rectangles and printing 
-// prediction text
-const ctx = canvas.getContext("2d");
-ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-ctx.font = "18px sans-serif";
-ctx.textBaseline = "top";
-
-// looping on predictions and drawing the bounding box for each object
-// and the text label background
-predictions.forEach(prediction => {
-  const x = prediction.bbox[0];
-  const y = prediction.bbox[1];
-  const width = prediction.bbox[2];
-  const height = prediction.bbox[3];
-
-  // Draw the bounding circle.
-  ctx.strokeStyle = "#333399";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x, y, width, height);
-
-  // Draw the label background.
-  ctx.fillStyle = "#333399";
-  const textWidth = ctx.measureText(prediction.class).width;
-  const textHeight = parseInt("16px sans-serif", 10); // base 10
-  ctx.fillRect(x, y, textWidth + 8, textHeight + 8);
-});
-
- // Looping over all predictions and drawing text (prediction class)
- predictions.forEach(prediction => {
-  const x = prediction.bbox[0];
-  const y = prediction.bbox[1];
-  
-  ctx.fillStyle = "#FFFFFF";
-
-  // Draw the text last to ensure it's on top.
-  if (prediction.class === "person" || prediction.class === "cell phone" || prediction.class === "book" || prediction.class === "laptop") {
-    ctx.fillText(prediction.class, x, y);
+  if (cameraType === 'front' && currentTime - lastDetectionTimeCamera < detectionInterval) {
+    requestAnimationFrame(() => detectFrame(video, canvas, model, cameraType));
+    return;
   }
-});
 
-// if face is not visible till 50 consecutive frames, face is missing, throw an error
-const persons = predictions.filter(prediction => prediction.class == 'person');
-if (persons.length === 0 && noPersonCount < 50){
-  noPersonCount++;
+  if (cameraType === 'mobile' && currentTime - lastDetectionTimeMobileCamera < detectionInterval) {
+    requestAnimationFrame(() => detectFrame(video, canvas, model, cameraType));
+    return;
+  }
+
+  if (cameraType === 'front') {
+    lastDetectionTimeCamera = currentTime;
+  } else if (cameraType === 'mobile') {
+    lastDetectionTimeMobileCamera = currentTime;
+  }
+
+  const predictions = await model.detect(video);
+  const filteredPredictions = predictions.filter(prediction => prediction.score > 0.6);
+  renderPredictions(filteredPredictions, canvas);
+
+  requestAnimationFrame(() => detectFrame(video, canvas, model, cameraType));
 }
-else if (persons.length === 0) {
-  noPersonCount = 0;
-  detect = false;
-  report({faceNotVisible: true});
-  Swal.fire({
-    title: `No face Detected`,
-    html: `This action has been recorded`,
-    icon: 'error',
-    heightAuto: false
-  }).then(() => {
-    detect = true;
-    detectFrame(video, canvas, model);
+
+function renderPredictions(predictions, canvas) {
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.font = "18px sans-serif";
+  ctx.textBaseline = "top";
+
+  predictions.forEach(prediction => {
+    const x = prediction.bbox[0];
+    const y = prediction.bbox[1];
+    const width = prediction.bbox[2];
+    const height = prediction.bbox[3];
+
+    ctx.strokeStyle = "#333399";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, width, height);
+
+    ctx.fillStyle = "#333399";
+    const textWidth = ctx.measureText(prediction.class).width;
+    const textHeight = parseInt("16px sans-serif", 10);
+    ctx.fillRect(x, y, textWidth + 8, textHeight + 8);
   });
+
+  predictions.forEach(prediction => {
+    const x = prediction.bbox[0];
+    const y = prediction.bbox[1];
+    ctx.fillStyle = "#FFFFFF";
+    if (["person", "cell phone", "book", "laptop"].includes(prediction.class)) {
+      ctx.fillText(prediction.class, x, y);
+    }
+  });
+
+  handleRestrictedItems(predictions);
 }
 
-// loop over all predictions and check if restricted items are present
-const restrictedItems = ['cell phone', 'book', 'laptop', 'Multiple faces'];
-
-let faces = 0;
-predictions.forEach(prediction => {
-  if(prediction.class == 'person') faces++;
-  if(faces > 1) prediction.class = 'Multiple faces';
-
-  if(restrictedItems.includes(prediction.class)){
-    const item = restrictedItems.find(item => item == prediction.class);
-
+function handleRestrictedItems(predictions) {
+  const persons = predictions.filter(prediction => prediction.class === 'person');
+  
+  if (persons.length === 0 && noPersonCount < 50) {
+    noPersonCount++;
+  } else if (persons.length === 0 && !alertActive) {
+    noPersonCount = 0;
     detect = false;
-    if(item == 'cell phone') report({mobileFound: true});
-    else if(item == 'Multiple faces') report({multipleFaceFound: true});
-    else report({prohibitedObjectFound: true});
+    alertActive = true;
+    report({ faceNotVisible: true });
     Swal.fire({
-      title: `${item} Detected`,
-      html: `This action has been recorded`,
+      title: 'No Face Detected',
+      html: 'This action has been recorded',
       icon: 'error',
       heightAuto: false
     }).then(() => {
       detect = true;
-      detectFrame(video, canvas, model);
+      alertActive = false;
+      restartAllDetections();
     });
   }
-})
-};
 
-// ********************
-// **** Event Callback Functions *****
-// ********************
+  const restrictedItems = ['cell phone', 'book', 'laptop', 'Multiple faces'];
+  let facesCount = 0;
+
+  predictions.forEach(prediction => {
+    if (prediction.class === 'person') facesCount++;
+    if (facesCount > 1) prediction.class = 'Multiple faces';
+
+    if (restrictedItems.includes(prediction.class) && !alertActive) {
+      detect = false;
+      alertActive = true;
+      if (prediction.class === 'cell phone') {
+        report({ mobileFound: true });
+      } else if (prediction.class === 'Multiple faces') {
+        report({ multipleFaceFound: true });
+      } else {
+        report({ prohibitedObjectFound: true });
+      }
+      Swal.fire({
+        title: `${prediction.class} detected`,
+        html: 'This action has been recorded',
+        icon: 'error',
+        heightAuto: false
+      }).then(() => {
+        detect = true;
+        alertActive = false;
+        restartAllDetections();
+      });
+    }
+  });
+}
+
+function restartAllDetections() {
+  detectFrame(videoGlobal, canvasGlobal, modelGlobal, 'front');
+  detectFrame(mobileVideoGlobal, mobileCanvasGlobal, mobileModelGlobal, 'mobile');
+}
+
 
 function changeQuestion(selectIdx){
   if(selectIdx > data.length-1) return;
 
-  // Removing and adding clicked class
   const idx = quesElem.dataset.ques - 1;
   document.querySelectorAll('.app-card')[idx].classList.remove('clicked');
   document.querySelectorAll('.app-card')[selectIdx].classList.add('clicked');
 
-  // Question No. Update
   quesElem.innerText = `Question No. ${selectIdx+1}`;
   quesElem.setAttribute('data-ques', selectIdx+1);
 
-  // Question Update
   quesContent.innerText = data[selectIdx].ques;
 
-  // Options Update
   options.innerHTML = ``;
   data[selectIdx].options.forEach((optionText, idx) => options.innerHTML += `<div class="option" data-no='${idx+1}'>${optionText}</div>`);
 
-  // Select option if answered
   const quesNo = selectIdx+1;
   const optionNo = ans[quesNo];
   optionNo != null ? options.children[optionNo-1].classList.add('clicked') : undefined;
@@ -286,9 +296,6 @@ function handleVisibilityChange() {
   }
 }
 
-// ********************
-// **** EVENTS *****
-// ********************
 
 nextBtn.onclick = () => changeQuestion(quesElem.dataset.ques*1);
 submitBtn.onclick = submitExam;

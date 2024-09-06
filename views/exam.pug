@@ -15,11 +15,11 @@ html
     script(src='//cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js')
   body
     .camera
-      video#cameraVideo(width='300' height='250' autoplay)
-      canvas#cameraCanvas(width='300' height='250' style='border:1px solid #d3d3d3;')
+      video#cameraVideo(width='320' height='320' autoplay)
+      canvas#cameraCanvas(width='320' height='320' style='border:1px solid #d3d3d3;')
     .mobile-camera
-      video#mobileCameraVideo(width='300' height='250' autoplay playsinline)
-      canvas#mobileCameraCanvas(width='300' height='250' style='border:1px solid #d3d3d3;')
+      video#mobileCameraVideo(width='320' height='320' autoplay playsinline style='margin-bottom: 23px;')
+      canvas#mobileCameraCanvas(width='320' height='320' style='border:1px solid #d3d3d3; margin-bottom: 20px;')
     .wrapper
       .left-side
         .main-header-heading Question Panel
@@ -46,7 +46,6 @@ html
     script(src="https://webrtc.github.io/adapter/adapter-latest.js")
     script.
       const socket = io('https://proctify.onrender.com/');
-      //- const socket = io('http://172.26.101.10:3000');
       let pc = new RTCPeerConnection();
 
       // Handle ICE candidates

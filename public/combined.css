@@ -112,16 +112,7 @@ body {
   color: white;
 }
 
-/* .camera video, canvas{
-  position: absolute;
-  right: 0;
-  bottom: 0;
-}
-.mobile-camera video, canvas{
-  position: absolute;
-  right: 0;
-  bottom: -1;
-} */
+
 .camera video, .camera canvas {
   position: absolute;
   right: 20px;
@@ -131,7 +122,7 @@ body {
 .mobile-camera video, .mobile-camera canvas {
   position: absolute;
   right: 20px;
-  bottom: 300px; /* Adjust the value to position it correctly */
+  bottom: 300px; 
 }
 
 .logoutBtn {
