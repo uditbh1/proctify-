@@ -27,8 +27,6 @@ const cors = require('cors');
 
 // Add CORS middleware
 app.use(cors({
-  // origin: 'http://172.26.101.10:8000', // Replace this with the actual origin or use a function to dynamically set it
-  // origin:'http://172.26.83.75:8000',   //pc
   origin:'*',   //pc
   credentials: true // Allow credentials (cookies)
 }));
